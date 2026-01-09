@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ethers } from "ethers";
 import ProofEdABI from "../contracts/ProofEdABI.json";
 import { CONTRACT_ADDRESS } from "../contracts/contractConfig";
+import { QRCodeCanvas } from "qrcode.react";
 
 function UniversityDashboard() {
     // ===============================
@@ -28,6 +29,7 @@ function UniversityDashboard() {
     const [certificateHash, setCertificateHash] = useState("");
 
     const [isIssued, setIsIssued] = useState(false);
+    const [txHash, setTxHash] = useState("");
 
 
     // ===============================
@@ -227,6 +229,7 @@ function UniversityDashboard() {
 
             // Write hash to blockchain
             const txHash = await issueCertificateOnChain(response.hash);
+            setTxHash(txHash);
             console.log("Blockchain Tx Hash:", txHash);
 
             // Finalize certificate (mock backend sync)
@@ -267,6 +270,10 @@ function UniversityDashboard() {
       }
     };
     */
+
+    const verificationURL = txHash
+        ? `https://proofed.app/cert/${txHash}`
+        : "";
 
 
     // ===============================
@@ -382,6 +389,42 @@ function UniversityDashboard() {
                             ✅ Certificate finalized and issued
                         </p>
                     )}
+
+                    {isIssued && txHash && (
+                        <div style={{ marginTop: "20px" }}>
+                            <h3>Certificate QR Code</h3>
+
+                            <QRCodeCanvas
+                                value={verificationURL}
+                                size={200}
+                                level="H"
+                                includeMargin={true}
+                            />
+
+                            <p style={{ marginTop: "10px" }}>
+                                Verification URL:
+                                <br />
+                                <a href={verificationURL} target="_blank" rel="noreferrer">
+                                    {verificationURL}
+                                </a>
+                            </p>
+
+                            <button
+                                style={{ marginTop: "10px" }}
+                                onClick={() => {
+                                    const canvas = document.querySelector("canvas");
+                                    const image = canvas.toDataURL("image/png");
+                                    const link = document.createElement("a");
+                                    link.href = image;
+                                    link.download = "certificate-qr.png";
+                                    link.click();
+                                }}
+                            >
+                                Download QR Code
+                            </button>
+                        </div>
+                    )}
+
 
                 </div>
             )}
