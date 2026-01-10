@@ -140,83 +140,102 @@ function CertificateVerification() {
   // ===============================
   // UI
   // ===============================
-  return (
-    <div style={{ padding: "40px", maxWidth: "700px" }}>
-      <h1>Certificate Verification</h1>
+return (
+  <div style={{ padding: "40px", maxWidth: "720px", margin: "0 auto" }}>
+    <h1>Certificate Verification</h1>
 
-      <p>
-        <strong>Transaction Hash:</strong>
-        <br />
-        <code>{txHash}</code>
-      </p>
+    <p style={{ fontSize: "14px", color: "#666" }}>
+      Transaction Hash:
+      <br />
+      <code style={{ fontSize: "12px" }}>{txHash}</code>
+    </p>
 
-      {loading && <p>🔍 Verifying certificate…</p>}
+    {loading && <p>🔍 Verifying certificate…</p>}
 
-      {!loading && certificate && (
-        <div style={{ marginTop: "20px" }}>
-          <p><strong>Student Name:</strong> {certificate.studentName}</p>
-          <p><strong>Student ID:</strong> {certificate.studentId}</p>
-          <p><strong>Course:</strong> {certificate.course}</p>
-          <p><strong>Grade:</strong> {certificate.grade}</p>
-          <p><strong>Issue Date:</strong> {certificate.issueDate}</p>
-          <p><strong>Issued By:</strong> {certificate.issuer}</p>
+    {!loading && verificationStatus && (
+      <div
+        style={{
+          marginTop: "24px",
+          padding: "24px",
+          borderRadius: "10px",
+          border:
+            verificationStatus === "VALID"
+              ? "2px solid #16a34a"
+              : "2px solid #dc2626",
+          background:
+            verificationStatus === "VALID" ? "#f0fdf4" : "#fef2f2",
+        }}
+      >
+        {/* BIG RESULT */}
+        <h2
+          style={{
+            color: verificationStatus === "VALID" ? "#16a34a" : "#dc2626",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          {verificationStatus === "VALID" ? "✅" : "❌"}
+          {verificationStatus === "VALID"
+            ? "Certificate is Authentic"
+            : "Certificate is Invalid"}
+        </h2>
 
-          {hashValid === true && (
-            <p style={{ color: "green", marginTop: "12px" }}>
-              ✅ Certificate data integrity verified
-            </p>
-          )}
+        <p style={{ marginTop: "6px", fontSize: "15px" }}>
+          {verificationStatus === "VALID"
+            ? "This certificate has been successfully verified using blockchain records."
+            : "This certificate failed verification checks and should not be trusted."}
+        </p>
+      </div>
+    )}
 
-          {hashValid === false && (
-            <p style={{ color: "red", marginTop: "12px" }}>
-              ❌ Certificate data has been tampered with
-            </p>
-          )}
+    {/* DETAILS */}
+    {!loading && certificate && (
+      <div style={{ marginTop: "28px" }}>
+        <h3>Certificate Details</h3>
 
-          {hashValid === true && onChainExists === true && (
-            <p style={{ color: "green" }}>
-              ⛓️ Certificate hash found on blockchain
-            </p>
-          )}
+        <p><strong>Student Name:</strong> {certificate.studentName}</p>
+        <p><strong>Student ID:</strong> {certificate.studentId}</p>
+        <p><strong>Course:</strong> {certificate.course}</p>
+        <p><strong>Grade:</strong> {certificate.grade}</p>
+        <p><strong>Issue Date:</strong> {certificate.issueDate}</p>
 
-          {hashValid === true && onChainExists === false && (
-            <p style={{ color: "red" }}>
-              ❌ Certificate hash NOT found on blockchain
-            </p>
-          )}
+        {/* ISSUER */}
+        <p style={{ marginTop: "10px" }}>
+          <strong>Issued By:</strong> {certificate.issuer}{" "}
+          <span
+            style={{
+              marginLeft: "6px",
+              padding: "2px 6px",
+              fontSize: "12px",
+              background: "#e0f2fe",
+              color: "#0369a1",
+              borderRadius: "6px",
+            }}
+          >
+            ✔ Verified Issuer
+          </span>
+        </p>
 
-          {/* FINAL VERDICT */}
-          {verificationStatus === "VALID" && (
-            <div
-              style={{
-                marginTop: "30px",
-                padding: "20px",
-                border: "2px solid green",
-                borderRadius: "8px",
-              }}
+        {/* BLOCKCHAIN LINK */}
+        {verificationStatus === "VALID" && (
+          <p style={{ marginTop: "12px" }}>
+            🔗 Blockchain Proof:{" "}
+            <a
+              href={`https://sepolia.etherscan.io/tx/${txHash}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#2563eb" }}
             >
-              <h2 style={{ color: "green" }}>✅ CERTIFICATE VALID</h2>
-              <p>This certificate is authentic and verified.</p>
-            </div>
-          )}
+              View on Sepolia Explorer
+            </a>
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+);
 
-          {verificationStatus === "INVALID" && (
-            <div
-              style={{
-                marginTop: "30px",
-                padding: "20px",
-                border: "2px solid red",
-                borderRadius: "8px",
-              }}
-            >
-              <h2 style={{ color: "red" }}>❌ CERTIFICATE INVALID</h2>
-              <p>This certificate failed verification checks.</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default CertificateVerification;
