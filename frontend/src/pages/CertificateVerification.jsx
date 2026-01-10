@@ -9,8 +9,11 @@ function CertificateVerification() {
 
   const [loading, setLoading] = useState(true);
   const [certificate, setCertificate] = useState(null);
-  const [hashValid, setHashValid] = useState(null); // null = not checked
-  const [onChainExists, setOnChainExists] = useState(null); // null = not checked
+
+  const [hashValid, setHashValid] = useState(null);        // integrity check
+  const [onChainExists, setOnChainExists] = useState(null); // blockchain check
+  const [verificationStatus, setVerificationStatus] = useState(null); 
+  // null | "VALID" | "INVALID"
 
   // ===============================
   // MOCK backend fetch (replace later)
@@ -36,7 +39,7 @@ function CertificateVerification() {
   };
 
   // ===============================
-  // Recompute hash (must match issuance)
+  // Recompute hash (same as issuance)
   // ===============================
   const recomputeHash = (cert) => {
     const normalizedMetadata = {
@@ -76,7 +79,20 @@ function CertificateVerification() {
   };
 
   // ===============================
-  // Fetch → hash check → chain check
+  // Final verification decision
+  // ===============================
+  const evaluateVerification = ({ hashValid, onChainExists, issuer }) => {
+    const issuerTrusted = issuer && issuer.length > 0;
+
+    if (hashValid && onChainExists && issuerTrusted) {
+      return "VALID";
+    }
+
+    return "INVALID";
+  };
+
+  // ===============================
+  // Full verification pipeline
   // ===============================
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -84,24 +100,35 @@ function CertificateVerification() {
         const data = await mockFetchCertificate();
         setCertificate(data);
 
-        // 1️⃣ Recompute hash
+        // 1️⃣ Integrity check
         const recomputed = recomputeHash(data);
+        const integrityPass = recomputed === data.hash;
+        setHashValid(integrityPass);
 
-        if (recomputed === data.hash) {
-          setHashValid(true);
+        let chainPass = false;
 
-          // 2️⃣ Read blockchain only if integrity passes
-          const exists = await checkOnChainCertificate(recomputed);
-          setOnChainExists(exists);
+        // 2️⃣ Blockchain check (only if integrity passes)
+        if (integrityPass) {
+          chainPass = await checkOnChainCertificate(recomputed);
+          setOnChainExists(chainPass);
         } else {
-          setHashValid(false);
           setOnChainExists(false);
         }
+
+        // 3️⃣ Final verdict
+        const status = evaluateVerification({
+          hashValid: integrityPass,
+          onChainExists: chainPass,
+          issuer: data.issuer,
+        });
+
+        setVerificationStatus(status);
       } catch (error) {
         console.error("Verification failed", error);
         setCertificate(null);
         setHashValid(false);
         setOnChainExists(false);
+        setVerificationStatus("INVALID");
       } finally {
         setLoading(false);
       }
@@ -114,7 +141,7 @@ function CertificateVerification() {
   // UI
   // ===============================
   return (
-    <div style={{ padding: "40px" }}>
+    <div style={{ padding: "40px", maxWidth: "700px" }}>
       <h1>Certificate Verification</h1>
 
       <p>
@@ -156,6 +183,35 @@ function CertificateVerification() {
             <p style={{ color: "red" }}>
               ❌ Certificate hash NOT found on blockchain
             </p>
+          )}
+
+          {/* FINAL VERDICT */}
+          {verificationStatus === "VALID" && (
+            <div
+              style={{
+                marginTop: "30px",
+                padding: "20px",
+                border: "2px solid green",
+                borderRadius: "8px",
+              }}
+            >
+              <h2 style={{ color: "green" }}>✅ CERTIFICATE VALID</h2>
+              <p>This certificate is authentic and verified.</p>
+            </div>
+          )}
+
+          {verificationStatus === "INVALID" && (
+            <div
+              style={{
+                marginTop: "30px",
+                padding: "20px",
+                border: "2px solid red",
+                borderRadius: "8px",
+              }}
+            >
+              <h2 style={{ color: "red" }}>❌ CERTIFICATE INVALID</h2>
+              <p>This certificate failed verification checks.</p>
+            </div>
           )}
         </div>
       )}
