@@ -177,3 +177,44 @@ export const connectWallet = wrapAsync(async (req, res) => {
         }
     });
 });
+
+// Step 4: Get Signup Status
+export const getSignupStatus = wrapAsync(async (req, res) => {
+    const { email } = req.query;
+
+    if (!email) {
+        throw new ExpressError(400, 'Email is required');
+    }
+
+    const university = await University.findOne({ email: email.toLowerCase() })
+        .select('-verificationToken'); // Don't send OTP in response
+
+    if (!university) {
+        throw new ExpressError(404, 'University not found');
+    }
+
+    let message = 'Your request is under admin verification';
+    
+    if (university.status === 'approved') {
+        message = 'Your university has been approved';
+    } else if (university.status === 'rejected') {
+        message = 'Your registration has been rejected';
+    } else if (!university.emailVerified) {
+        message = 'Please verify your email';
+    } else if (!university.walletAddress) {
+        message = 'Please connect your wallet';
+    }
+
+    res.json({
+        success: true,
+        data: {
+            universityId: university._id,
+            name: university.name,
+            email: university.email,
+            emailVerified: university.emailVerified,
+            walletAddress: university.walletAddress || null,
+            status: university.status,
+            message
+        }
+    });
+});
