@@ -56,3 +56,12 @@ export const login = wrapAsync(async (req, res) => {
         }
     });
 });
+
+// Admin Logout
+export const logout = wrapAsync(async (req, res) => {
+    res.clearCookie('adminToken');
+    res.json({
+        success: true,
+        message: 'Logout successful'
+    });
+});
