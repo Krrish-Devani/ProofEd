@@ -9,37 +9,11 @@ function CertificateVerification() {
 
   const [loading, setLoading] = useState(true);
   const [certificate, setCertificate] = useState(null);
-
-  const [hashValid, setHashValid] = useState(null);        // integrity check
-  const [onChainExists, setOnChainExists] = useState(null); // blockchain check
-  const [verificationStatus, setVerificationStatus] = useState(null); 
-  // null | "VALID" | "INVALID"
+  const [verificationStatus, setVerificationStatus] = useState(null); // VALID | INVALID
+  const [error, setError] = useState("");
 
   // ===============================
-  // MOCK backend fetch (replace later)
-  // ===============================
-  const mockFetchCertificate = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const normalized = {
-      studentName: "Jash Bohare",
-      studentId: "24BCP326",
-      course: "B.Tech CE",
-      grade: "A+",
-      issueDate: "2026-01-09",
-    };
-
-    return {
-      ...normalized,
-      issuer: "IIT Delhi",
-      hash: ethers.keccak256(
-        ethers.toUtf8Bytes(JSON.stringify(normalized))
-      ),
-    };
-  };
-
-  // ===============================
-  // Recompute hash (same as issuance)
+  // Recompute hash (MUST match issuance)
   // ===============================
   const recomputeHash = (cert) => {
     const normalizedMetadata = {
@@ -47,7 +21,7 @@ function CertificateVerification() {
       studentId: cert.studentId.trim(),
       course: cert.course.trim(),
       grade: cert.grade.trim(),
-      issueDate: cert.issueDate,
+      issueDate: new Date(cert.issueDate).toISOString().split("T")[0],
     };
 
     return ethers.keccak256(
@@ -56,7 +30,7 @@ function CertificateVerification() {
   };
 
   // ===============================
-  // Read blockchain (read-only)
+  // Blockchain read (read-only)
   // ===============================
   const checkOnChainCertificate = async (certHash) => {
     try {
@@ -70,172 +44,163 @@ function CertificateVerification() {
         provider
       );
 
+      // assumes mapping(bytes32 => bool)
       const exists = await contract.certificates(certHash);
       return exists;
-    } catch (error) {
-      console.error("Blockchain read failed", error);
+    } catch (err) {
+      console.error("Blockchain read failed", err);
       return false;
     }
   };
 
   // ===============================
-  // Final verification decision
+  // REAL backend fetch (NO MOCK)
   // ===============================
-  const evaluateVerification = ({ hashValid, onChainExists, issuer }) => {
-    const issuerTrusted = issuer && issuer.length > 0;
+  const fetchCertificate = async () => {
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/certificate/${txHash}`
+    );
 
-    if (hashValid && onChainExists && issuerTrusted) {
-      return "VALID";
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Certificate not found");
     }
 
-    return "INVALID";
+    return data.data;
   };
 
   // ===============================
   // Full verification pipeline
   // ===============================
   useEffect(() => {
-    const verifyCertificate = async () => {
+    const verify = async () => {
       try {
-        const data = await mockFetchCertificate();
-        setCertificate(data);
+        // 1️⃣ Fetch real certificate from DB
+        const cert = await fetchCertificate();
+        setCertificate(cert);
 
-        // 1️⃣ Integrity check
-        const recomputed = recomputeHash(data);
-        const integrityPass = recomputed === data.hash;
-        setHashValid(integrityPass);
+        // 2️⃣ Recompute hash from metadata
+        const recomputedHash = recomputeHash(cert);
 
-        let chainPass = false;
-
-        // 2️⃣ Blockchain check (only if integrity passes)
-        if (integrityPass) {
-          chainPass = await checkOnChainCertificate(recomputed);
-          setOnChainExists(chainPass);
-        } else {
-          setOnChainExists(false);
+        if (recomputedHash !== cert.certificateHash) {
+          setVerificationStatus("INVALID");
+          return;
         }
 
-        // 3️⃣ Final verdict
-        const status = evaluateVerification({
-          hashValid: integrityPass,
-          onChainExists: chainPass,
-          issuer: data.issuer,
-        });
+        // 3️⃣ Verify on blockchain
+        const onChain = await checkOnChainCertificate(recomputedHash);
 
-        setVerificationStatus(status);
-      } catch (error) {
-        console.error("Verification failed", error);
-        setCertificate(null);
-        setHashValid(false);
-        setOnChainExists(false);
+        if (!onChain) {
+          setVerificationStatus("INVALID");
+          return;
+        }
+
+        // 4️⃣ Final verdict
+        setVerificationStatus("VALID");
+      } catch (err) {
+        console.error("Verification failed", err);
+        setError(err.message);
         setVerificationStatus("INVALID");
       } finally {
         setLoading(false);
       }
     };
 
-    verifyCertificate();
+    verify();
   }, [txHash]);
 
   // ===============================
   // UI
   // ===============================
-return (
-  <div style={{ padding: "40px", maxWidth: "720px", margin: "0 auto" }}>
-    <h1>Certificate Verification</h1>
+  return (
+    <div style={{ padding: "40px", maxWidth: "720px", margin: "0 auto" }}>
+      <h1>Certificate Verification</h1>
 
-    <p style={{ fontSize: "14px", color: "#666" }}>
-      Transaction Hash:
-      <br />
-      <code style={{ fontSize: "12px" }}>{txHash}</code>
-    </p>
+      <p style={{ fontSize: "14px", color: "#666" }}>
+        Transaction Hash:
+        <br />
+        <code style={{ fontSize: "12px" }}>{txHash}</code>
+      </p>
 
-    {loading && <p>🔍 Verifying certificate…</p>}
+      {loading && <p>🔍 Verifying certificate…</p>}
 
-    {!loading && verificationStatus && (
-      <div
-        style={{
-          marginTop: "24px",
-          padding: "24px",
-          borderRadius: "10px",
-          border:
-            verificationStatus === "VALID"
-              ? "2px solid #16a34a"
-              : "2px solid #dc2626",
-          background:
-            verificationStatus === "VALID" ? "#f0fdf4" : "#fef2f2",
-        }}
-      >
-        {/* BIG RESULT */}
-        <h2
+      {!loading && verificationStatus && (
+        <div
           style={{
-            color: verificationStatus === "VALID" ? "#16a34a" : "#dc2626",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
+            marginTop: "24px",
+            padding: "24px",
+            borderRadius: "10px",
+            border:
+              verificationStatus === "VALID"
+                ? "2px solid #16a34a"
+                : "2px solid #dc2626",
+            background:
+              verificationStatus === "VALID" ? "#f0fdf4" : "#fef2f2",
           }}
         >
-          {verificationStatus === "VALID" ? "✅" : "❌"}
-          {verificationStatus === "VALID"
-            ? "Certificate is Authentic"
-            : "Certificate is Invalid"}
-        </h2>
-
-        <p style={{ marginTop: "6px", fontSize: "15px" }}>
-          {verificationStatus === "VALID"
-            ? "This certificate has been successfully verified using blockchain records."
-            : "This certificate failed verification checks and should not be trusted."}
-        </p>
-      </div>
-    )}
-
-    {/* DETAILS */}
-    {!loading && certificate && (
-      <div style={{ marginTop: "28px" }}>
-        <h3>Certificate Details</h3>
-
-        <p><strong>Student Name:</strong> {certificate.studentName}</p>
-        <p><strong>Student ID:</strong> {certificate.studentId}</p>
-        <p><strong>Course:</strong> {certificate.course}</p>
-        <p><strong>Grade:</strong> {certificate.grade}</p>
-        <p><strong>Issue Date:</strong> {certificate.issueDate}</p>
-
-        {/* ISSUER */}
-        <p style={{ marginTop: "10px" }}>
-          <strong>Issued By:</strong> {certificate.issuer}{" "}
-          <span
+          <h2
             style={{
-              marginLeft: "6px",
-              padding: "2px 6px",
-              fontSize: "12px",
-              background: "#e0f2fe",
-              color: "#0369a1",
-              borderRadius: "6px",
+              color: verificationStatus === "VALID" ? "#16a34a" : "#dc2626",
             }}
           >
-            ✔ Verified Issuer
-          </span>
-        </p>
+            {verificationStatus === "VALID" ? "✅ Certificate is Authentic" : "❌ Certificate is Invalid"}
+          </h2>
 
-        {/* BLOCKCHAIN LINK */}
-        {verificationStatus === "VALID" && (
-          <p style={{ marginTop: "12px" }}>
-            🔗 Blockchain Proof:{" "}
-            <a
-              href={`https://sepolia.etherscan.io/tx/${txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "#2563eb" }}
-            >
-              View on Sepolia Explorer
-            </a>
+          <p style={{ marginTop: "8px" }}>
+            {verificationStatus === "VALID"
+              ? "This certificate has been verified using blockchain and issuer records."
+              : "This certificate failed verification checks and should not be trusted."}
           </p>
-        )}
-      </div>
-    )}
-  </div>
-);
+        </div>
+      )}
 
+      {/* DETAILS */}
+      {!loading && certificate && (
+        <div style={{ marginTop: "28px" }}>
+          <h3>Certificate Details</h3>
+
+          <p><strong>Student Name:</strong> {certificate.studentName}</p>
+          <p><strong>Student ID:</strong> {certificate.studentId}</p>
+          <p><strong>Student Email:</strong> {certificate.studentEmail}</p>
+          <p><strong>Course:</strong> {certificate.course}</p>
+          <p><strong>Grade:</strong> {certificate.grade}</p>
+          <p><strong>Issue Date:</strong> {certificate.issueDate}</p>
+
+          <p style={{ marginTop: "10px" }}>
+            <strong>Issued By:</strong> {certificate.issuer}
+            <span
+              style={{
+                marginLeft: "8px",
+                padding: "2px 6px",
+                fontSize: "12px",
+                background: "#e0f2fe",
+                color: "#0369a1",
+                borderRadius: "6px",
+              }}
+            >
+              ✔ Verified Issuer
+            </span>
+          </p>
+
+          {verificationStatus === "VALID" && (
+            <p style={{ marginTop: "12px" }}>
+              🔗 Blockchain Proof:{" "}
+              <a
+                href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on Sepolia Explorer
+              </a>
+            </p>
+          )}
+        </div>
+      )}
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </div>
+  );
 }
 
 export default CertificateVerification;

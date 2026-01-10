@@ -7,6 +7,7 @@ import { ExpressError } from './lib/ExpressError.js';
 import connectDB from './lib/mongodb.js';
 import universityRoutes from './routes/university.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import certificateRoutes from "./routes/certificate.routes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(cors({
 
 app.use('/api/university', universityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/certificate", certificateRoutes);
 
 app.use((req, res, next) => {
   next(new ExpressError(404, 'Route not found'));
