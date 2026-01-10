@@ -55,7 +55,7 @@ export const signup = wrapAsync(async (req, res) => {
 
 // Step 2a: Resend OTP
 export const resendOTP = wrapAsync(async (req, res) => {
-    const { email } = req.body;
+    const { email } = req.query;
 
     if (!email) {
         throw new ExpressError(400, 'Email is required');
@@ -180,7 +180,7 @@ export const connectWallet = wrapAsync(async (req, res) => {
 
 // Step 4: Get Signup Status
 export const getSignupStatus = wrapAsync(async (req, res) => {
-    const { email } = req.body;
+    const { email } = req.query;
 
     if (!email) {
         throw new ExpressError(400, 'Email is required');
