@@ -271,9 +271,9 @@ function UniversityDashboard() {
     };
     */
 
-    const verificationURL = txHash
-        ? `https://proofed.app/cert/${txHash}`
-        : "";
+    const verificationURL =
+        `https://concha-interangular-wamblingly.ngrok-free.dev/cert/${txHash}`;
+
 
 
     // ===============================
