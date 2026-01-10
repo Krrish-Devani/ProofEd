@@ -7,6 +7,23 @@ const certificateSchema = new mongoose.Schema({
         trim: true
     },
 
+    studentId: {
+        type: String,
+        required: true,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+    },
+
+    studentEmail: {
+        type: String,
+        required: true,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+        match: /.+\@.+\..+/
+    },
+
     course: {
         type: String,
         required: true,

@@ -22,8 +22,9 @@ const universitySchema = new mongoose.Schema({
 
     walletAddress: {
         type: String,
-        required: true,
+        required: false,
         unique: true,
+        sparse: true,
         lowercase: true,
     },
 
@@ -39,7 +40,7 @@ const universitySchema = new mongoose.Schema({
     },
 
     verificationToken: String,
-    verificationTokeneExpiry: Date,
+    verificationTokenExpiry: Date,
     rejectionReason: String,
     approvedAt: Date,
 
