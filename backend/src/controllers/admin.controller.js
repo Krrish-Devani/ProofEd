@@ -220,3 +220,47 @@ export const approveUniversity = wrapAsync(async (req, res) => {
         throw error;
     }
 });
+
+// Step 6b: Reject University
+export const rejectUniversity = wrapAsync(async (req, res) => {
+    const { universityId } = req.params;
+    const { reason } = req.body; // Optional rejection reason
+
+    const university = await University.findById(universityId);
+
+    if (!university) {
+        throw new ExpressError(404, 'University not found');
+    }
+
+    if (university.status === 'rejected') {
+        throw new ExpressError(400, 'University is already rejected');
+    }
+
+    if (university.status === 'approved') {
+        throw new ExpressError(400, 'Cannot reject an approved university');
+    }
+
+    // Update status
+    university.status = 'rejected';
+    university.rejectionReason = reason || 'Registration rejected by admin';
+    await university.save();
+
+    // Send rejection email
+    try {
+        await sendRejectionEmail(university.email, university.name, university.rejectionReason);
+    } catch (emailError) {
+        console.error('Failed to send rejection email:', emailError);
+        // Don't fail the rejection if email fails
+    }
+
+    res.json({
+        success: true,
+        message: 'University rejected successfully',
+        data: {
+            universityId: university._id,
+            name: university.name,
+            status: university.status,
+            rejectionReason: university.rejectionReason
+        }
+    });
+});
