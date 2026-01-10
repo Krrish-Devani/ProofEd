@@ -65,3 +65,43 @@ export const logout = wrapAsync(async (req, res) => {
         message: 'Logout successful'
     });
 });
+
+// Get Admin Profile
+export const getProfile = wrapAsync(async (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            adminId: req.admin._id,
+            username: req.admin.username,
+            email: req.admin.email
+        }
+    });
+});
+
+// Step 5: Get Pending Universities (Admin Reviews)
+export const getPendingUniversities = wrapAsync(async (req, res) => {
+    const pendingUniversities = await University.find({ 
+        status: 'pending',
+        emailVerified: true,
+        walletAddress: { $exists: true, $ne: null }
+    })
+    .select('-verificationToken -verificationTokenExpiry')
+    .sort({ createdAt: -1 });
+
+    res.json({
+        success: true,
+        count: pendingUniversities.length,
+        data: pendingUniversities.map(university => ({
+            universityId: university._id,
+            name: university.name,
+            email: university.email,
+            website: university.website,
+            walletAddress: university.walletAddress,
+            emailVerified: university.emailVerified,
+            status: university.status,
+            createdAt: university.createdAt,
+            // Calculate email domain from email
+            emailDomain: university.email.split('@')[1]
+        }))
+    });
+});
