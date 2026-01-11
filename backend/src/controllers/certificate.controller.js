@@ -137,7 +137,6 @@ export const finalizeCertificate = wrapAsync(async (req, res) => {
  * ===============================
  */
 export const getCertificateByTxHash = wrapAsync(async (req, res) => {
-    console.log("✅ VERIFICATION API HIT: ", req.params.txHash)
     const { txHash } = req.params;
 
     const certificate = await Certificate.findOne({
