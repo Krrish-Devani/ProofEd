@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
 
 function UniversitySignup() {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ function UniversitySignup() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/university/signup",
+                API_ENDPOINTS.UNIVERSITY_SIGNUP,
                 {
                     method: "POST",
                     headers: {

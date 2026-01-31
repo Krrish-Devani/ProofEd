@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "../config/api";
 
 function AdminDashboard() {
     const [universities, setUniversities] = useState([]);
@@ -9,7 +10,7 @@ function AdminDashboard() {
         try {
             setLoading(true);
             const response = await fetch(
-                "http://localhost:5000/api/admin/pending-universities",
+                API_ENDPOINTS.PENDING_UNIVERSITIES,
                 {
                     credentials: "include",
                 }
@@ -31,7 +32,7 @@ function AdminDashboard() {
 
     const approveUniversity = async (universityId) => {
         await fetch(
-            `http://localhost:5000/api/admin/universities/${universityId}/approve`,
+            API_ENDPOINTS.APPROVE_UNIVERSITY(universityId),
             {
                 method: "POST",
                 credentials: "include",
@@ -42,7 +43,7 @@ function AdminDashboard() {
 
     const rejectUniversity = async (universityId) => {
         const res = await fetch(
-            `http://localhost:5000/api/admin/universities/${universityId}/reject`,
+            API_ENDPOINTS.REJECT_UNIVERSITY(universityId),
             {
                 method: "POST",
                 credentials: "include",

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ProofEdABI from "../contracts/ProofEdABI.json";
 import { CONTRACT_ADDRESS } from "../contracts/contractConfig";
+import { API_ENDPOINTS } from "../config/api";
 
 function CertificateVerification() {
   const { txHash } = useParams();
@@ -58,7 +59,7 @@ function CertificateVerification() {
   // ===============================
   const fetchCertificate = async () => {
     const res = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/certificate/${txHash}`
+      API_ENDPOINTS.GET_CERTIFICATE(txHash)
     );
 
     const data = await res.json();

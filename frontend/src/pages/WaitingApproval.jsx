@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
 
 function WaitingApproval() {
     const navigate = useNavigate();
@@ -26,7 +27,7 @@ function WaitingApproval() {
             setLoading(true);
 
             const response = await fetch(
-                `http://localhost:5000/api/university/signup-status?email=${email}`
+                `${API_ENDPOINTS.SIGNUP_STATUS}?email=${email}`
             );
 
             const data = await response.json();

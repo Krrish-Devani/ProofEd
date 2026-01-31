@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
 
 function ConnectWallet() {
     const navigate = useNavigate();
@@ -40,7 +41,7 @@ function ConnectWallet() {
 
             // 2️⃣ Send wallet to backend
             const response = await fetch(
-                "http://localhost:5000/api/university/connect-wallet",
+                API_ENDPOINTS.CONNECT_WALLET,
                 {
                     method: "POST",
                     headers: {

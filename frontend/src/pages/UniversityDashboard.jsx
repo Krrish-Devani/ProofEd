@@ -5,6 +5,7 @@ import { QRCodeCanvas } from "qrcode.react";
 
 import ProofEdABI from "../contracts/ProofEdABI.json";
 import { CONTRACT_ADDRESS } from "../contracts/contractConfig";
+import { API_ENDPOINTS } from "../config/api";
 
 function UniversityDashboard() {
     const navigate = useNavigate();
@@ -53,7 +54,7 @@ function UniversityDashboard() {
             }
 
             const res = await fetch(
-                `http://localhost:5000/api/university/signup-status?email=${email}`,
+                `${API_ENDPOINTS.SIGNUP_STATUS}?email=${email}`,
                 { credentials: "include" }
             );
 
@@ -97,7 +98,7 @@ function UniversityDashboard() {
         const issuerEmail = localStorage.getItem("signupEmail");
 
         const res = await fetch(
-            "http://localhost:5000/api/university/issue-certificate",
+            API_ENDPOINTS.ISSUE_CERTIFICATE,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -146,7 +147,7 @@ function UniversityDashboard() {
     // ===============================
     const finalizeCertificateBackend = async (certificateId, transactionHash) => {
         const res = await fetch(
-            "http://localhost:5000/api/university/finalize-certificate",
+            API_ENDPOINTS.FINALIZE_CERTIFICATE,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

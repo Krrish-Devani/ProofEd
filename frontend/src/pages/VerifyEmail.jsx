@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
 
 function VerifyEmail() {
     const navigate = useNavigate();
@@ -27,7 +28,7 @@ function VerifyEmail() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/university/verify-email",
+                API_ENDPOINTS.VERIFY_EMAIL,
                 {
                     method: "POST",
                     headers: {
@@ -61,7 +62,7 @@ function VerifyEmail() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/university/resend-otp",
+                API_ENDPOINTS.RESEND_OTP,
                 {
                     method: "POST",
                     headers: {
