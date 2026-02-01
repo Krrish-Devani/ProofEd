@@ -55,26 +55,23 @@ function CertificateVerification() {
   };
 
   // ===============================
-  // REAL backend fetch (NO MOCK)
-  // ===============================
-  const fetchCertificate = async () => {
-    const res = await fetch(
-      API_ENDPOINTS.GET_CERTIFICATE(txHash)
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Certificate not found");
-    }
-
-    return data.data;
-  };
-
-  // ===============================
   // Full verification pipeline
   // ===============================
   useEffect(() => {
+    const fetchCertificate = async () => {
+      const res = await fetch(
+        API_ENDPOINTS.GET_CERTIFICATE(txHash)
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Certificate not found");
+      }
+
+      return data.data;
+    };
+
     const verify = async () => {
       try {
         // 1️⃣ Fetch real certificate from DB

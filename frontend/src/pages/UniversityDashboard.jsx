@@ -34,7 +34,6 @@ function UniversityDashboard() {
     // Result state
     // ===============================
     const [certificateId, setCertificateId] = useState("");
-    const [certificateHash, setCertificateHash] = useState("");
     const [txHash, setTxHash] = useState("");
     const [issued, setIssued] = useState(false);
 
@@ -187,7 +186,6 @@ function UniversityDashboard() {
 
             const res = await issueCertificateBackend(payload);
             setCertificateId(res.certificateId);
-            setCertificateHash(res.certificateHash);
 
             // 2️⃣ On-chain write
             const tx = await issueCertificateOnChain(res.certificateHash);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../config/api";
 
@@ -22,7 +22,7 @@ function WaitingApproval() {
     }, [navigate]);
 
     // Fetch status from backend
-    const fetchStatus = async () => {
+    const fetchStatus = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -47,15 +47,14 @@ function WaitingApproval() {
         } finally {
             setLoading(false);
         }
-    };
-
+    }, [email, navigate]);
 
     // Poll once on load
     useEffect(() => {
         if (email) {
             fetchStatus();
         }
-    }, [email]);
+    }, [email, fetchStatus]);
 
     return (
         <div
