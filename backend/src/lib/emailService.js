@@ -4,20 +4,22 @@ import crypto from 'crypto';
 const createTransporter = () => {
     return nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.EMAIL_PORT || '465'),
-        secure: true, // true for 465, false for other ports
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: false, // Use TLS on port 587 for better cloud compatibility
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        // Add connection timeout settings to prevent hanging
-        connectionTimeout: 15000, // 15 seconds
-        greetingTimeout: 15000,
-        socketTimeout: 15000,
-        // Pool settings for better connection handling
-        pool: true,
-        maxConnections: 1,
-        maxMessages: 3,
+        // Connection settings optimized for cloud environments
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+        pool: {
+            maxConnections: 1,
+            maxMessages: 10,
+        },
+        tls: {
+            rejectUnauthorized: false // Required for some cloud environments
+        }
     });
 };
 
